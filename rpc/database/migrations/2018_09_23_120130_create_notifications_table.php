@@ -14,8 +14,8 @@ class CreateNotificationsTable extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('invoice_id');
-            $table->foreign('invoice_id')->references('id')->on('invoices')->change();
+            $table->bigInteger('invoice_id')->unsigned();
+            $table->foreign('invoice_id')->references('id')->on('invoices');
             $table->text('type');
             $table->text('status');
             $table->text('blob');

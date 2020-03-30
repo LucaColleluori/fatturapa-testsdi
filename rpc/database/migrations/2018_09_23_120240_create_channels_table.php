@@ -13,9 +13,10 @@ class CreateChannelsTable extends Migration
     public function up()
     {
         Schema::create('channels', function (Blueprint $table) {
-            $table->text('cedente');
-            $table->text('issuer');
+            $table->string('cedente');
+            $table->string('issuer');
             $table->primary('cedente');
+            $table->timestamps();
         });
     }
 
