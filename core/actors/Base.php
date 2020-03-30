@@ -9,7 +9,7 @@ use FatturaPa\Core\Models\Notification;
 use FatturaPa\Core\Models\Channel;
 use Illuminate\Support\Facades\URL;
 
-define('TIME_TRAVEL_DB', $_SERVER['DOCUMENT_ROOT'] . '/core/storage/time_travel.json');
+define('TIME_TRAVEL_DB', __DIR__ . '/../../core/storage/time_travel.json');
 
 class Base
 {
@@ -52,7 +52,7 @@ class Base
     {
         $data = self::retrieve();
         $real_time_now = new \DateTime();
-            
+
         $delta_seconds = round(($real_time_now->getTimestamp() - $data['real_time']->getTimestamp()) * $data['speed']);
         $simulated_time_now = $data['simulated_time']->add(new \DateInterval("PT${delta_seconds}S"));
         $data['real_time'] = $real_time_now;
@@ -75,7 +75,7 @@ class Base
                 'ctime' => $dateTime->date
             ]
         );
-                    
+
         return $Notification;
     }
     public static function receive($notification_blob, $filename, $type, $invoice_id)
@@ -116,12 +116,12 @@ class Base
             $urlData = explode("/", $url);
             $actor = $urlData[1];
         }
-        
+
         $issuers=self::getActors();
         if (!in_array($actor, $issuers)) {
             abort(404);
         }
-                
+
         return $actor;
     }
     public static function getIssuers()
@@ -145,7 +145,7 @@ class Base
     public static function getChannels()
     {
         $Channelslist = Channel::all();
-                
+
         $channels = array();
         foreach ($Channelslist as $k => $channel) {
             $channels[$channel['cedente']]=$channel['issuer'];
