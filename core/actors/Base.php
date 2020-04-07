@@ -3,6 +3,9 @@
 
 namespace FatturaPa\Core\Actors;
 
+use DateInterval;
+use DateTime;
+use Exception;
 use FatturaPa\Core\Models\Database;
 use FatturaPa\Core\Models\Invoice;
 use FatturaPa\Core\Models\Notification;
@@ -53,7 +56,7 @@ class Base
     {
         $data = self::retrieve();
         $real_time_now = new \DateTime();
-            
+
         $delta_seconds = round(($real_time_now->getTimestamp() - $data['real_time']->getTimestamp()) * $data['speed']);
         $simulated_time_now = $data['simulated_time']->add(new \DateInterval("PT${delta_seconds}S"));
         $data['real_time'] = $real_time_now;
@@ -76,7 +79,7 @@ class Base
                 'ctime' => $dateTime->date
             ]
         );
-                    
+
         return $Notification;
     }
     public static function receive($notification_blob, $filename, $type, $invoice_id)
@@ -122,12 +125,17 @@ class Base
         if (!in_array($actor, $actors)) {
             abort(404);
         }
-                
+
         return $actor;
     }
     public static function getIssuers()
     {
-        $channels = Channel::select(['issuer'])->distinct()->get();
+        $channels = collect();
+        try {
+            $channels = Channel::select(['issuer'])->distinct()->get();
+        } catch (Exception $ex) {
+
+        }
         $issuers = [];
         foreach ($channels->toArray() as $channel) {
             $issuers[] = $channel['issuer'];
@@ -145,11 +153,11 @@ class Base
     }
     public static function getChannels()
     {
-    	$Actorslist = Actor::select(['id'])->distinct()->get();        		               
+    	$Actorslist = Actor::select(['id'])->distinct()->get();
         $channels = array();
         foreach ($Actorslist->toArray() as $k => $channel) {
-        	$cedente = Channel::where('issuer', '=', $channel['id'])->pluck('cedente');			
-			$channels[$k]['id']=$channel['id'];			    	
+        	$cedente = Channel::where('issuer', '=', $channel['id'])->pluck('cedente');
+			$channels[$k]['id']=$channel['id'];
             $channels[$k]['cedenti']=$cedente->toArray();
         }
         return $channels;
