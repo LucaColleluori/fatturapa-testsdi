@@ -144,7 +144,12 @@ class Base
     }
     public static function getActors()
     {
+        $channels = collect();
+        try {
         $channels = Channel::select(['issuer'])->distinct()->get();
+        } catch (Exception $ex) {
+
+        }
         $actors = array('sdi');
         foreach ($channels->toArray() as $channel) {
             $actors[] = "td" . $channel['issuer'];
