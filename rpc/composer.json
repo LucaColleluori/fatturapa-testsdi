@@ -33,7 +33,7 @@
         "phpunit/phpunit": "~6.0",
         "symfony/thanks": "^1.0",
         "fatturapa/control": "dev-master",
-        "fatturapa/ui": "dev-master"
+        "fatturapa/ui": "dev-feature/mysql_fixes"
     },
     "autoload": {
         "classmap": [
