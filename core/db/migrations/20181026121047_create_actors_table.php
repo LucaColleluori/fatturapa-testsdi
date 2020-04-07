@@ -12,10 +12,10 @@ class CreateActorsTable extends MigrationManager
     {
         if (!$this->schema->hasTable('actors')) {
             $this->schema->create('actors', function (Illuminate\Database\Schema\Blueprint $table) {
-                $table->text('id');
-                $table->text('code');
-                $table->text('key');
-                $table->text('certificate');                                   
+                $table->string('id');
+                $table->string('code');
+                $table->string('key')->nullable();
+                $table->string('certificate')->nullable();
             });
         }
     }

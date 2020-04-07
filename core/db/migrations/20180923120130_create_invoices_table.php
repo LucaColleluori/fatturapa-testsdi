@@ -15,11 +15,11 @@ class CreateInvoicesTable extends MigrationManager
             $this->schema->create('invoices', function (Illuminate\Database\Schema\Blueprint $table) {
                 $table->increments('id');
                 $table->integer('remote_id')->nullable();
-                $table->text('nomefile');
-                $table->text('posizione');
-                $table->text('cedente');
-                $table->text('anno');
-                $table->text('status');
+                $table->string('nomefile');
+                $table->string('posizione');
+                $table->string('cedente');
+                $table->string('anno');
+                $table->string('status');
                 $table->text('blob');
                 $table->dateTimeTz('ctime')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->string('actor')->nullable();

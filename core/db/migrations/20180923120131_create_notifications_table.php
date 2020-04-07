@@ -16,8 +16,8 @@ class CreateNotificationsTable extends MigrationManager
                 $table->increments('id');
                 $table->integer('invoice_id');
                 $table->foreign('invoice_id')->references('id')->on('invoices')->change();
-                $table->text('type');
-                $table->text('status');
+                $table->string('type');
+                $table->string('status');
                 $table->text('blob');
                 $table->string('actor')->nullable();
                 $table->text('nomefile')->nullable();
