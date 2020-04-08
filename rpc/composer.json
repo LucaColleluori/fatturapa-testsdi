@@ -32,7 +32,7 @@
         "mockery/mockery": "~1.0",
         "phpunit/phpunit": "~6.0",
         "symfony/thanks": "^1.0",
-        "fatturapa/control": "dev-master",
+        "fatturapa/control": "dev-feature/mysql_fixes",
         "fatturapa/ui": "dev-feature/mysql_fixes"
     },
     "autoload": {
