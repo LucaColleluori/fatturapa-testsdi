@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Channel extends Model
 {
     public $incrementing = false;
-	public $timestamps = false;
+    public $timestamps = false;
     protected $primaryKey = 'cedente';
     protected $table = 'channels';
     protected $fillable = [
         'cedente',
         'issuer'
     ];
-	
-	/*public function parent()
+
+    /*public function parent()
     {
         return $this->belongsTo('Channel', 'cedente');
     }
@@ -25,5 +25,4 @@ class Channel extends Model
         return $this->hasMany('Channel', 'cedente');
     }*/
 
-	
 }

@@ -7,3 +7,4 @@ rpc/php_errorlog
 soap/test.json
 vendor
 rpc/bootstrap/cache__
+.idea

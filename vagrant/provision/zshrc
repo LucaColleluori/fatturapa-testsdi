@@ -1,0 +1,57 @@
+# Path to your oh-my-zsh installation.
+export ZSH=$HOME/.oh-my-zsh
+ZSH_THEME="robbyrussell"
+ENABLE_CORRECTION="true"
+plugins=(git osx bower laravel5 history npm sudo colorize github vagrant pip brew zsh-syntax-highlighting)
+
+# User configuration
+
+# export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+# export MANPATH="/usr/local/man:$MANPATH"
+# export PATH="$HOME/.config/composer/vendor/bin"
+# export PATH="$PATH:$HOME/.composer/vendor/bin"
+export PATH="$PATH:/opt/sonar-scanner/bin"
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+
+export LANGUAGE='en_US.UTF-8'
+export LC_ALL='en_US.UTF-8'
+
+source $ZSH/oh-my-zsh.sh
+source $HOME/.nvm/nvm.sh
+source $ZSH/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# You may need to manually set your language environment
+# export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='mvim'
+# fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# ssh
+# export SSH_KEY_PATH="~/.ssh/dsa_id"
+
+# Set message storage: memory | mongodb | maildir
+export MH_STORAGE=maildir
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+
+alias zshconfig="vim ~/.zshrc"
+alias ll='ls -l'
+alias la='ls -a'
+alias art='php artisan'
+alias a='php artisan'
+
+alias composer="php /usr/bin/composer"
+alias mc="/usr/local/mc"
+alias xdebug-on="sudo phpenmod xdebug"
+alias xdebug-off="sudo phpdismod xdebug"

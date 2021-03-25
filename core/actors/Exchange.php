@@ -1,21 +1,27 @@
 <?php
 
-
 namespace FatturaPa\Core\Actors;
 
+use DOMDocument;
+use Exception;
+use FatturaPa\Core\Models\Channel;
 use FatturaPa\Core\Models\Database;
 use FatturaPa\Core\Models\Invoice;
 use FatturaPa\Core\Models\Notification;
-use FatturaPa\Core\Models\Channel;
-use FatturaPa\Core\Actors\Base;
+use fileSdI_Type;
+use fileSdIConMetadati_Type;
+use RicezioneFatture_service;
+use SoapFault;
+use TrasmissioneFatture_service;
+use function strtotime;
 
 class Exchange
 {
-
     public static function Exchange()
     {
         new Database();
     }
+
     public static function receive($invoice_blob, $filename, $position)
     {
         Exchange::Exchange();
@@ -35,18 +41,19 @@ class Exchange
         );
         return $invoice;
     }
+
     public static function checkValidity()
     {
-       
+
         Exchange::Exchange();
         $Invoice = Invoice::all()->where('status', 'E_RECEIVED');
         $Invoices = $Invoice->toArray();
-                        
+
         foreach ($Invoices as $Invoice) {
             $xmlString = base64_decode($Invoice['blob']);
             $valid = Exchange::validateInvoice($xmlString);
             if ($valid === true) {
-                Invoice::find($Invoice['id'])->update(['status' => 'E_VALID' ]);
+                Invoice::find($Invoice['id'])->update(['status' => 'E_VALID']);
                 $xml = Base::unpack($xmlString);
                 $cedente = $xml->FatturaElettronicaHeader->CedentePrestatore->DatiAnagrafici->IdFiscaleIVA->IdPaese .
                     '-' .
@@ -54,9 +61,9 @@ class Exchange
                 $data = $xml->FatturaElettronicaBody[0]->DatiGenerali->DatiGeneraliDocumento->Data;
                 $anno = substr($data, 0, 4);
                 $issuer = Channel::find($cedente)->issuer;
-                Invoice::find($Invoice['id'])->update(['cedente' => $cedente ]);
-                Invoice::find($Invoice['id'])->update(['anno' => $anno ]);
-                Invoice::find($Invoice['id'])->update(['issuer' => $issuer ]);
+                Invoice::find($Invoice['id'])->update(['cedente' => $cedente]);
+                Invoice::find($Invoice['id'])->update(['anno' => $anno]);
+                Invoice::find($Invoice['id'])->update(['issuer' => $issuer]);
             } else {
                 Invoice::find($Invoice['id'])->update(['status' => 'E_INVALID']);
                 // TODO: fill data in notification
@@ -97,18 +104,18 @@ XML;
 
     public static function dispatchi()
     {
-        $service1 = new \TrasmissioneFatture_service(array('trace' => 1));
-        $service2 = new \RicezioneFatture_service(array('trace' => 1));
+        $service1 = new TrasmissioneFatture_service(array('trace' => 1));
+        $service2 = new RicezioneFatture_service(array('trace' => 1));
 
         $notifications = Notification::all()
             ->where('status', 'N_PENDING')
             ->where('actor', Base::getActor());
         $notifications = $notifications->toArray();
-        
+
         foreach ($notifications as $notification) {
             echo 'looking at notification  ' . json_encode($notification) . '<br/>' . PHP_EOL;
 
-            $fileSdI = new \fileSdI_Type($notification['id'], $notification['nomefile'], $notification['blob']);
+            $fileSdI = new fileSdI_Type($notification['id'], $notification['nomefile'], $notification['blob']);
             $invoice = Invoice::find($notification['invoice_id']);
             $issuer = $invoice->issuer;
             $sent = Base::dispatchNotification(
@@ -130,35 +137,35 @@ XML;
                     $notification['type'],
                     $fileSdI
                 );
-            } 
+            }
             if ($sent) {
                 echo "sent !" . '<br/>';
-                Notification::find($notification['id'])->update(['status' => 'N_DELIVERED' ]);
+                Notification::find($notification['id'])->update(['status' => 'N_DELIVERED']);
             }
         }
         return true;
     }
+
     // if dummy is set and true, it will simulate failure to deliver
     public static function deliver($dummy)
     {
-        $dateTime=Base::getDateTime();
+        $dateTime = Base::getDateTime();
         $Invoice = Invoice::where('status', 'E_VALID')
             ->orWhere('status', 'E_FAILED_DELIVERY')
             ->where('actor', Base::getActor());
         $Invoices = $Invoice->get()->toArray();
-        
-        
-                    
+
+
         foreach ($Invoices as $Invoice) {
             $invoice_id = $Invoice['id'];
             $invoice_filename = $Invoice['nomefile'];
             $invoice_ctime = $Invoice['ctime'];
-            $timeAfter48Hour = \strtotime($invoice_ctime . " + 48 hours");
-            $timeAfter12Days = \strtotime($invoice_ctime . " + 12 days");
-            $currentTime = \strtotime($dateTime->date);
+            $timeAfter48Hour = strtotime($invoice_ctime . " + 48 hours");
+            $timeAfter12Days = strtotime($invoice_ctime . " + 12 days");
+            $currentTime = strtotime($dateTime->date);
             if ($currentTime >= $timeAfter12Days) {
                 $Invoice['status'] = 'E_IMPOSSIBLE_DELIVERY';
-                Invoice::find($invoice_id)->update(['status' => 'E_IMPOSSIBLE_DELIVERY' ]);
+                Invoice::find($invoice_id)->update(['status' => 'E_IMPOSSIBLE_DELIVERY']);
                 // Attestazione di avvenuta trasmissione della fattura con impossibilità di recapito
                 $notification = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -204,21 +211,21 @@ XML;
 XML;
                     $nomeFileMetadati = '';
                     libxml_disable_entity_loader(false);
-                    $service = new \RicezioneFatture_service(array('trace' => 1));
-                    $service->__setLocation(HOSTMAIN.$addressee.'/soap/RicezioneFatture/');
-                    $fileSdIConMetadati = new \fileSdIConMetadati_Type(
+                    $service = new RicezioneFatture_service(array('trace' => 1));
+                    $service->__setLocation(HOSTMAIN . $addressee . '/soap/RicezioneFatture/');
+                    $fileSdIConMetadati = new fileSdIConMetadati_Type(
                         $invoice_id,
                         $invoice_filename,
                         $Invoice['blob'],
                         $nomeFileMetadati,
                         base64_encode($metadati)
                     );
-                    
+
                     try {
                         $response = $service->RiceviFatture($fileSdIConMetadati);
                         if ($response) {
                             $Invoice['status'] = 'E_DELIVERED';
-                            Invoice::find($invoice_id)->update(['status' => 'E_DELIVERED' ]);
+                            Invoice::find($invoice_id)->update(['status' => 'E_DELIVERED']);
                             // TODO: fill data in notification
                             $notification = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -245,13 +252,13 @@ XML;
                             );
                         }
                     } catch (SoapFault $e) {
-                        echo "SOAP Fault: (faultcode: {".$e->faultcode."}, faultstring: {".$e->faultstring."})";
+                        echo "SOAP Fault: (faultcode: {" . $e->faultcode . "}, faultstring: {" . $e->faultstring . "})";
                         exit;
                     }
                 }
 
-                if (($currentTime >= $timeAfter48Hour) && $Invoice['status']=='E_VALID') {
-                    Invoice::find($invoice_id)->update(['status' => 'E_FAILED_DELIVERY' ]);
+                if (($currentTime >= $timeAfter48Hour) && $Invoice['status'] == 'E_VALID') {
+                    Invoice::find($invoice_id)->update(['status' => 'E_FAILED_DELIVERY']);
                     // TODO: fill data in notification
                     $notification = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -275,25 +282,26 @@ XML;
                 }
             }
         }
-    
+
         return true;
     }
+
     public static function checkExpiration()
     {
-        $dateTime=Base::getDateTime();
+        $dateTime = Base::getDateTime();
         $Invoice = Invoice::where('status', 'E_DELIVERED')->where('actor', Base::getActor());
         $Invoices = $Invoice->get()->toArray();
-        
+
         foreach ($Invoices as $Invoice) {
             $invoice_id = $Invoice['id'];
             $invoice_filename = $Invoice['nomefile'];
             $invoice_ctime = $Invoice['ctime'];
-            $timeAfter15Days = \strtotime($invoice_ctime . " + 15 days");
-            $currentTime = \strtotime($dateTime->date);
+            $timeAfter15Days = strtotime($invoice_ctime . " + 15 days");
+            $currentTime = strtotime($dateTime->date);
             if ($currentTime >= $timeAfter15Days) {
-                Invoice::find($invoice_id)->update(['status' => 'E_EXPIRED' ]);
-                    
-                    $notification = <<<XML
+                Invoice::find($invoice_id)->update(['status' => 'E_EXPIRED']);
+
+                $notification = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="MC_v1.0.xsl"?>
 <types:NotificaMancataConsegna xmlns:types="http://www.fatturapa.gov.it/sdi/messaggi/v1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" versione="1.0" xsi:schemaLocation="http://www.fatturapa.gov.it/sdi/messaggi/v1.0 MessaggiTypes_v1.0.xsd ">
@@ -305,17 +313,18 @@ XML;
     <Note>Esempio</Note>
 </types:NotificaMancataConsegna>
 XML;
-                    // TODO: sign notification (on hold)
-                                        
-                    Base::enqueue(
-                        $notification_blob = base64_encode($notification),
-                        $filename = 'IT01234567890_11111_MC_123456.xml',
-                        $type = 'NotificaDecorrenzaTermini',
-                        $invoice_id = $invoice_id
-                    );
+                // TODO: sign notification (on hold)
+
+                Base::enqueue(
+                    $notification_blob = base64_encode($notification),
+                    $filename = 'IT01234567890_11111_MC_123456.xml',
+                    $type = 'NotificaDecorrenzaTermini',
+                    $invoice_id = $invoice_id
+                );
             }
         }
     }
+
     public static function acceptRefuse($invoice_id, $status, $esito)
     {
         new Database();
@@ -344,14 +353,15 @@ XML;
             $invoice_id = $invoice_id
         );
     }
+
     private static function validateInvoice($xmlString)
     {
-        $xml = new \DOMDocument();
+        $xml = new DOMDocument();
         try {
             $xml->loadXML($xmlString, LIBXML_NOBLANKS);
-            $schema = SAFEROOT.'core/schemas/Schema_del_file_xml_FatturaPA_versione_1.2_cleanup.xsd';
+            $schema = SAFEROOT . 'core/schemas/Schema_del_file_xml_FatturaPA_versione_1.2_cleanup.xsd';
             $valid = $xml->schemaValidate($schema);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $valid = false;
         }
         return $valid;

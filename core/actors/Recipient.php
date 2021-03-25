@@ -5,12 +5,15 @@ namespace FatturaPa\Core\Actors;
 use FatturaPa\Core\Models\Database;
 use FatturaPa\Core\Models\Invoice;
 use FatturaPa\Core\Models\Notification;
+use fileSdI_Type;
+use SdIRiceviNotifica_service;
 
 class Recipient
 {
     public static function Recipient()
     {
     }
+
     public static function receive($invoice_blob, $filename, $position, $remote_id)
     {
         new Database();
@@ -31,6 +34,7 @@ class Recipient
         );
         return $invoice;
     }
+
     public static function accept($id)
     {
         Invoice::where('id', '=', $id)->update(array('status' => 'R_ACCEPTED'));
@@ -50,7 +54,7 @@ class Recipient
   <MessageIdCommittente>123456</MessageIdCommittente>
 </types:NotificaEsitoCommittente>
 XML;
-    
+
         // TODO: sign notification (on hold)
         $File = base64_encode($notification);
         $NomeFile = 'IT01234567890_11111_EC_001.xml';
@@ -61,6 +65,7 @@ XML;
             $invoice_id = $id
         );
     }
+
     public static function refuse($id)
     {
         Invoice::where('id', '=', $id)->update(array('status' => 'R_REFUSED'));
@@ -90,28 +95,29 @@ XML;
             $invoice_id = $id
         );
     }
+
     public static function dispatchi()
     {
         $notifications = Notification::all()
             ->where('status', 'N_PENDING')
             ->where('actor', Base::getActor());
         $notifications = $notifications->toArray();
-		
-		
-        $service = new \SdIRiceviNotifica_service(array('trace' => 1));
+
+
+        $service = new SdIRiceviNotifica_service(array('trace' => 1));
 
         foreach ($notifications as $notification) {
             $invoice = Invoice::find($notification['invoice_id']);
             $remote_id = $invoice->remote_id;
-            $fileSdI = new \fileSdI_Type($remote_id, $notification['nomefile'], $notification['blob']);
+            $fileSdI = new fileSdI_Type($remote_id, $notification['nomefile'], $notification['blob']);
             $sent = Base::dispatchNotification($service, "sdi", "SdIRiceviNotifica", "NotificaEsito", $fileSdI);
-            
+
             if ($sent) {
                 echo "sent !";
-                Notification::find($notification['id'])->update(['status' => 'N_DELIVERED' ]);
+                Notification::find($notification['id'])->update(['status' => 'N_DELIVERED']);
             }
         }
-        
+
         //ACCEPT DRAFT
         /*$notifications = Notification::all()
             ->where('status', 'R_ACCEPTED')
@@ -129,8 +135,8 @@ XML;
                 Notification::find($notification['id'])->update(['status' => 'E_ACCEPTED' ]);
             }
         }*/
-        
-                
-         return true;
+
+
+        return true;
     }
 }

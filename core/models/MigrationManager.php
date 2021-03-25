@@ -3,26 +3,29 @@
 namespace FatturaPa\Core\Models;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Schema\Builder;
 use Phinx\Migration\AbstractMigration;
 
-class MigrationManager extends AbstractMigration {
-    /** @var \Illuminate\Database\Capsule\Manager $capsule */
+class MigrationManager extends AbstractMigration
+{
+    /** @var Capsule $capsule */
     public $capsule;
-    /** @var \Illuminate\Database\Schema\Builder $capsule */
+    /** @var Builder $capsule */
     public $schema;
 
-    public function init() {
+    public function init()
+    {
         $this->capsule = new Capsule;
         $this->capsule->addConnection([
-            'driver'    => DBDRIVER,
-            'host'      => DBHOST,
-            'database'  => DBNAME,
-            'username'  => DBUSER,
-            'password'  => DBPASS,
-            'charset'   => 'utf8',
+            'driver' => DBDRIVER,
+            'host' => DBHOST,
+            'database' => DBNAME,
+            'username' => DBUSER,
+            'password' => DBPASS,
+            'charset' => 'utf8',
             'collation' => 'utf8_unicode_ci',
-            'prefix'    => '',
-            'schema'   => 'public'
+            'prefix' => '',
+            'schema' => 'public'
         ]);
 
         $this->capsule->bootEloquent();

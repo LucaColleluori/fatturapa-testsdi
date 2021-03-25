@@ -9,22 +9,21 @@ class Database
 
     public function __construct()
     {
-            
         $capsule = new Capsule;
 
         $capsule->addConnection([
-        'driver'    => DBDRIVER,
-        'host'      => DBHOST,
-        'database'  => DBNAME,
-        'username'  => DBUSER,
-        'password'  => DBPASS,
-        'charset'   => 'utf8',
-        'collation' => 'utf8_unicode_ci',
-        'prefix'    => '',
-        'schema'   => 'public'
+            'driver' => DBDRIVER,
+            'host' => DBHOST,
+            'database' => DBNAME,
+            'username' => DBUSER,
+            'password' => DBPASS,
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',
+            'prefix' => '',
+            'schema' => 'public'
         ]);
 
-    // Setup the Eloquent ORM...
+        // Setup the Eloquent ORM...
         $capsule->bootEloquent();
     }
 }

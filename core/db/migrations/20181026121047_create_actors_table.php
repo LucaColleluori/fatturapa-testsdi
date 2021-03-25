@@ -1,7 +1,7 @@
 <?php
 
 use FatturaPa\Core\Models\MigrationManager;
-use Illuminate\Database\Connection as DB;
+use Illuminate\Database\Schema\Blueprint;
 
 class CreateActorsTable extends MigrationManager
 {
@@ -11,11 +11,11 @@ class CreateActorsTable extends MigrationManager
     public function up()
     {
         if (!$this->schema->hasTable('actors')) {
-            $this->schema->create('actors', function (Illuminate\Database\Schema\Blueprint $table) {
-                $table->text('id');
-                $table->text('code');
-                $table->text('key');
-                $table->text('certificate');                                   
+            $this->schema->create('actors', function (Blueprint $table) {
+                $table->string('id');
+                $table->string('code');
+                $table->string('key')->nullable();
+                $table->string('certificate')->nullable();
             });
         }
     }

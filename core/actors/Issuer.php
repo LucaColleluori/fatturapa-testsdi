@@ -1,12 +1,13 @@
 <?php
 
-
 namespace FatturaPa\Core\Actors;
 
+use Exception;
 use FatturaPa\Core\Models\Database;
 use FatturaPa\Core\Models\Invoice;
-use FatturaPa\Core\Actors\Base;
+use fileSdIBase_Type;
 use Log;
+use SdIRiceviFile_service;
 
 class Issuer
 {
@@ -27,49 +28,51 @@ class Issuer
         );
         return $invoice;
     }
+
     public static function transmit()
     {
-        
+
         $Invoice = Invoice::all()->where('status', 'I_UPLOADED')->where('actor', Base::getActor());
         $Invoices = $Invoice->toArray();
-        
+
 
         foreach ($Invoices as $Invoice) {
-            $service = new \SdIRiceviFile_service(array('trace' => 1));
-            $service->__setLocation(HOSTMAIN.'sdi/soap/SdIRiceviFile/');
-                            
+            $service = new SdIRiceviFile_service(array('trace' => 1));
+            $service->__setLocation(HOSTMAIN . 'sdi/soap/SdIRiceviFile/');
+
             $NomeFile = $Invoice['nomefile'];
             $File = $Invoice['blob'];
-                        
-            $fileSdIBase = new \fileSdIBase_Type($NomeFile, $File);
-            
+
+            $fileSdIBase = new fileSdIBase_Type($NomeFile, $File);
+
             Log::error('START------------------:');
-            Log::error('Params:'.json_encode($Invoice));
+            Log::error('Params:' . json_encode($Invoice));
             Log::error('------------------END');
-                                    
+
             try {
                 $response = $service->RiceviFile($fileSdIBase);
-                                
+
                 if (is_object($response)) {
                     if ($response->getErrore()) {
-                        Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID' ]);
+                        Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID']);
                     } else {
                         $invoice_id = $response->getIdentificativoSdI();
-                        Invoice::find($Invoice['id'])->update(['status' => 'I_TRANSMITTED' ]);
-                        Invoice::find($Invoice['id'])->update(['remote_id' => (int) $invoice_id ]);
+                        Invoice::find($Invoice['id'])->update(['status' => 'I_TRANSMITTED']);
+                        Invoice::find($Invoice['id'])->update(['remote_id' => (int)$invoice_id]);
                     }
                 } else {
-                    Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID' ]);
-                    echo "SOAP Fault: (faultstring: {".$response."})";
+                    Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID']);
+                    echo "SOAP Fault: (faultstring: {" . $response . "})";
                     exit;
                 }
             } catch (Exception $e) {
-                Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID' ]);
-                echo "SOAP Fault: (faultcode: {".$e->faultcode."}, faultstring: {".$e->faultstring."})";
+                Invoice::find($Invoice['id'])->update(['status' => 'I_INVALID']);
+                echo "SOAP Fault: (faultcode: {" . $e->faultcode . "}, faultstring: {" . $e->faultstring . "})";
             }
         }
         return true;
     }
+
     public static function receive($notification_blob, $filename, $type, $status)
     {
         new Database();
@@ -84,7 +87,7 @@ class Issuer
         if (!is_null($invoice_id)) {
             error_log("id = $invoice_id");
             Base::receive($notification_blob, $filename, $type, $invoice_id);
-            Invoice::find($invoice_id)->update(['status' => $status ]);    
+            Invoice::find($invoice_id)->update(['status' => $status]);
         }
     }
 }

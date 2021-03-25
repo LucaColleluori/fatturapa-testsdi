@@ -3,7 +3,13 @@
     "description": "Sistema d'Interscambio di test",
     "type": "project",
     "license": "AGPL-3.0",
-    "require": {},
+    "require": {
+        "ext-json": "*",
+        "ext-soap": "*",
+        "ext-libxml": "*",
+        "ext-simplexml": "*",
+        "ext-dom": "*"
+    },
     "require-dev": {
         "phpunit/phpunit": "^6.5",
         "guzzlehttp/guzzle": "^6.3",

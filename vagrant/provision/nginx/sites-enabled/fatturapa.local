@@ -1,0 +1,43 @@
+server {
+    listen 443 ssl;
+    server_name fatturapa.local;
+    root /home/vagrant/fatturapa;
+
+    index index.html index.htm index.php;
+
+    access_log off;
+    error_log  /var/log/nginx/fatturapa.local-error.log error;
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php7.4-fpm.sock;
+        fastcgi_read_timeout 300;
+    }
+    location ^~ /sdi/rpc/js/ {
+        alias /home/vagrant/fatturapa/rpc/packages/fatturapa/ui/src/public/js/;
+    }
+    location ^~ /sdi/rpc/css/ {
+        alias /home/vagrant/fatturapa/rpc/packages/fatturapa/ui/src/public/css/;
+    }
+    location ^~ /sdi/rpc/webfonts/ {
+        alias /home/vagrant/fatturapa/rpc/packages/fatturapa/ui/src/public/webfonts/;
+    }
+    location ^~ /sdi/rpc/font/ {
+        alias /home/vagrant/fatturapa/rpc/packages/fatturapa/ui/src/public/font/;
+    }
+    location ~ /.*/rpc {
+        try_files $uri $uri/ /rpc/index.php?$query_string;
+    }
+    location ~ /.*/soap {
+        try_files $uri $uri/ /soap/index.php;
+    }
+
+    ssl_certificate     /etc/nginx/ssl/star.fatturapa.local.crt;
+    ssl_certificate_key /etc/nginx/ssl/star.fatturapa.local.key;
+}
+
+server {
+    listen 80;
+    server_name fatturapa.local;
+    return 301 https://$host$request_uri;
+}
